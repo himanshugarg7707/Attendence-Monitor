@@ -1,0 +1,1 @@
+{"version":3,"file":"proximity-guard.middleware.d.ts","sourceRoot":"","sources":["../../../server/middleware/proximity-guard.middleware.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;;;;;;;GAkBG;AAMH;;;GAGG;AACH,MAAM,WAAW,uBAAuB;IACtC,iBAAiB,EAAE,OAAO,CAAC;IAC3B,kBAAkB,EAAE,MAAM,CAAC;CAC5B;AAED;;;;;;;;;;GAUG;AACH,eAAO,MAAM,cAAc;;;;iBA4IzB,CAAC"}
