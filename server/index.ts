@@ -33,7 +33,12 @@ app.use('*', logger());
 app.use(
   '*',
   cors({
-    origin: [CONFIG.RP.origin, 'http://localhost:5173', 'http://localhost:3000'],
+    origin: [
+  CONFIG.RP.origin,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://attendence-monitor.vercel.app'
+],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
