@@ -2,7 +2,7 @@
  * HTTP API client for communication with the attendance server.
  */
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'https://attendence-monitor.onrender.com';
 
 async function request<T>(
   path: string,

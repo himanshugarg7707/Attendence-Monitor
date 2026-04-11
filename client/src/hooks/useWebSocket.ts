@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { DashboardEvent, StudentVerifiedPayload } from '../types';
 
-const WS_BASE = 'ws://localhost:3001';
+const WS_BASE = 'wss://attendence-monitor.onrender.com';
 
 interface WebSocketState {
   isConnected: boolean;
