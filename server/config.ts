@@ -12,8 +12,8 @@ export const CONFIG = {
   /** Relying Party configuration for WebAuthn */
   RP: {
     name: 'Trusted Proximity Attendance',
-    id: process.env.RP_ID ?? 'localhost',
-    origin: process.env.RP_ORIGIN ?? 'http://localhost:5173',
+    id: 'attendence-monitor.onrender.com',
+    origin: 'https://attendence-monitor.vercel.app',
   },
 
   /** BLE Proximity thresholds */
