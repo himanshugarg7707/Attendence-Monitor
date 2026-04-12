@@ -12,7 +12,7 @@ export const CONFIG = {
   /** Relying Party configuration for WebAuthn */
   RP: {
     name: 'Trusted Proximity Attendance',
-    id: 'attendence-monitor.onrender.com',
+    id: 'attendence-monitor.vercel.app',
     origin: 'https://attendence-monitor.vercel.app',
   },
 
