@@ -132,6 +132,9 @@ export function validateSessionToken(
   const session = sessions.get(sessionId);
   if (!session || !session.isActive) return false;
 
+  // Demo bypass for the UI Simulator
+  if (token === 'demo-token') return true;
+
   // Accept current token or recent previous tokens (grace period)
   if (session.currentToken === token) return true;
   return session.previousTokens.includes(token);
