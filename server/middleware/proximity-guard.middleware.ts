@@ -142,11 +142,25 @@ export const proximityGuard = createMiddleware(async (c, next) => {
   // The rolling session token rotates every 30 seconds.
   // We accept the current token + previous N tokens (grace period).
 
+  const session = getSession(classroomId);
+  
+  // Distinguish between a missing session (server restart/invalid ID) and an expired token
+  if (!session) {
+    return c.json(
+      {
+        success: false,
+        error: 'Session not found. Please start a new session in the Dashboard tab.',
+        details: { classroomId },
+        timestamp: new Date().toISOString(),
+      },
+      404,
+    );
+  }
+
   if (!validateSessionToken(classroomId, rollingSessionToken)) {
-    const session = getSession(classroomId);
     console.log(
       `[ProximityGuard] ❌ REJECTED: Invalid session token for classroom ${classroomId}. ` +
-      `Session ${session ? 'exists' : 'NOT FOUND'}, active: ${session?.isActive ?? 'N/A'}`,
+      `Session exists, active: ${session.isActive}`,
     );
 
     return c.json(
@@ -155,10 +169,8 @@ export const proximityGuard = createMiddleware(async (c, next) => {
         error: 'Invalid or expired session token',
         details: {
           classroomId,
-          sessionActive: session?.isActive ?? false,
-          recommendation: session
-            ? 'Token may have expired. The classroom beacon rotates tokens every 30 seconds.'
-            : 'No active session found for this classroom. Ask your professor to start the session.',
+          sessionActive: session.isActive,
+          recommendation: 'Token may have expired. The classroom beacon rotates tokens every 30 seconds.',
         },
         timestamp: new Date().toISOString(),
       },
