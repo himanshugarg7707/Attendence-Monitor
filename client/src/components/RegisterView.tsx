@@ -6,8 +6,12 @@
 import { useState } from 'react';
 import { useWebAuthn } from '../hooks/useWebAuthn';
 
-export function RegisterView() {
-  const [studentId, setStudentId] = useState('student-001');
+interface RegisterViewProps {
+  onSuccess?: () => void;
+}
+
+export function RegisterView({ onSuccess }: RegisterViewProps) {
+  const [studentId, setStudentId] = useState('');
   const [studentName, setStudentName] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [success, setSuccess] = useState(false);
@@ -15,9 +19,14 @@ export function RegisterView() {
   const webauthn = useWebAuthn(studentId);
 
   const handleRegister = async () => {
-    if (!studentName || !studentEmail) return;
+    if (!studentId || !studentName || !studentEmail) return;
     const result = await webauthn.register(studentName, studentEmail);
-    if (result) setSuccess(true);
+    if (result) {
+      setSuccess(true);
+      if (onSuccess) {
+        setTimeout(onSuccess, 1500); // 1.5s delay to see the success message
+      }
+    }
   };
 
   return (
@@ -53,17 +62,14 @@ export function RegisterView() {
         <>
           <div className="form-group">
             <label className="form-label" htmlFor="register-student-id">Student ID</label>
-            <select
+             <input
               id="register-student-id"
               className="form-input"
+              type="text"
+              placeholder="e.g. stu-1234"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
-            >
-              <option value="student-001">student-001 (Arjun Mehta)</option>
-              <option value="student-002">student-002 (Priya Sharma)</option>
-              <option value="student-003">student-003 (Rahul Gupta)</option>
-              <option value="student-new">student-new (New Student)</option>
-            </select>
+            />
           </div>
 
           <div className="form-group">

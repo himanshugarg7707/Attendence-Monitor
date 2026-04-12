@@ -86,7 +86,7 @@ export function createSession(
   className: string,
 ): ClassroomSession {
   const session: ClassroomSession = {
-    id: crypto.randomUUID(),
+    id: crypto.randomBytes(4).toString('hex').toUpperCase(),
     professorId,
     className,
     currentToken: generateSessionToken(),
@@ -210,27 +210,5 @@ function startTokenRotation(sessionId: string): void {
 // ─── Seed Demo Data ──────────────────────────────────────────────
 
 export function seedDemoData(): void {
-  // Create a demo professor session
-  const demoStudents: StudentProfile[] = [
-    {
-      id: 'student-001',
-      name: 'Arjun Mehta',
-      email: 'arjun@university.edu',
-      registeredAt: new Date().toISOString(),
-    },
-    {
-      id: 'student-002',
-      name: 'Priya Sharma',
-      email: 'priya@university.edu',
-      registeredAt: new Date().toISOString(),
-    },
-    {
-      id: 'student-003',
-      name: 'Rahul Gupta',
-      email: 'rahul@university.edu',
-      registeredAt: new Date().toISOString(),
-    },
-  ];
-
-  demoStudents.forEach((s) => createStudent(s));
+  // Empty seed. Users will create their own accounts.
 }

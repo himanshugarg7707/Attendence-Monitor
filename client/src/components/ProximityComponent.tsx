@@ -33,7 +33,7 @@ import * as api from '../services/api';
 import type { AttendanceResult, VerificationStep } from '../types';
 
 export function ProximityComponent() {
-  const [studentId, setStudentId] = useState('student-001');
+  const [studentId, setStudentId] = useState('');
   const [classroomId, setClassroomId] = useState('');
   const [simulatedRSSI, setSimulatedRSSI] = useState(-45);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -239,17 +239,15 @@ export function ProximityComponent() {
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="proximity-student-id">Student</label>
-          <select
+          <label className="form-label" htmlFor="proximity-student-id">Student ID</label>
+           <input
             id="proximity-student-id"
             className="form-input"
+            type="text"
+            placeholder="e.g. stu-1234"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-          >
-            <option value="student-001">Arjun Mehta (student-001)</option>
-            <option value="student-002">Priya Sharma (student-002)</option>
-            <option value="student-003">Rahul Gupta (student-003)</option>
-          </select>
+          />
         </div>
 
         <div className="form-group">

@@ -45,9 +45,15 @@ function App() {
 
       {/* Views */}
       <main>
-        {activeTab === 'register' && <RegisterView />}
-        {activeTab === 'proximity' && <ProximityComponent />}
-        {activeTab === 'dashboard' && <DashboardView />}
+        <div style={{ display: activeTab === 'register' ? 'block' : 'none' }}>
+          <RegisterView onSuccess={() => setActiveTab('proximity')} />
+        </div>
+        <div style={{ display: activeTab === 'proximity' ? 'block' : 'none' }}>
+          <ProximityComponent />
+        </div>
+        <div style={{ display: activeTab === 'dashboard' ? 'block' : 'none' }}>
+          <DashboardView />
+        </div>
       </main>
 
       {/* Footer */}
