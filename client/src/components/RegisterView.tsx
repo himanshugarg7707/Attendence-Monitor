@@ -8,9 +8,10 @@ import { useWebAuthn } from '../hooks/useWebAuthn';
 
 interface RegisterViewProps {
   onSuccess?: () => void;
+  onBackToSignIn?: () => void;
 }
 
-export function RegisterView({ onSuccess }: RegisterViewProps) {
+export function RegisterView({ onSuccess, onBackToSignIn }: RegisterViewProps) {
   const [studentId, setStudentId] = useState('');
   const [studentName, setStudentName] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
@@ -23,6 +24,14 @@ export function RegisterView({ onSuccess }: RegisterViewProps) {
     const result = await webauthn.register(studentName, studentEmail);
     if (result) {
       setSuccess(true);
+      try {
+        localStorage.setItem(
+          'student_profile',
+          JSON.stringify({ id: studentId, name: studentName, email: studentEmail }),
+        );
+      } catch {
+        // Ignore
+      }
       if (onSuccess) {
         setTimeout(onSuccess, 1500); // 1.5s delay to see the success message
       }
@@ -127,6 +136,19 @@ export function RegisterView({ onSuccess }: RegisterViewProps) {
               <>🔐 Register Passkey</>
             )}
           </button>
+
+          {onBackToSignIn && (
+            <div style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={onBackToSignIn}
+                style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}
+              >
+                ← Back to Sign-In Portal
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

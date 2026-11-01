@@ -178,6 +178,66 @@ export const proximityGuard = createMiddleware(async (c, next) => {
     );
   }
 
+  // ─── Hotspot Proximity & Anti-Spoofing Check ─────────────────
+  if (session.requireHotspot) {
+    const hotspot = (proximity as any).hotspot as { ssid?: string; connected?: boolean; bssid?: string } | undefined;
+    if (!hotspot || !hotspot.connected) {
+      console.log(
+        `[ProximityGuard] ❌ REJECTED: Student not connected to faculty hotspot "${session.hotspotSSID || 'Faculty Hotspot'}"`,
+      );
+
+      return c.json(
+        {
+          success: false,
+          error: `Must be connected to Faculty Hotspot "${session.hotspotSSID || 'Faculty Hotspot'}" to verify attendance`,
+          details: {
+            requiredHotspot: session.hotspotSSID,
+            connectedHotspot: hotspot?.ssid || 'Not connected',
+            recommendation: `Please connect your phone/laptop to "${session.hotspotSSID || 'Faculty Hotspot'}"`,
+          },
+          timestamp: new Date().toISOString(),
+        },
+        403,
+      );
+    }
+
+    // Anti-Spoofing Defense: Public Egress IP Check
+    // When students are actually connected to the faculty hotspot, they share the faculty's cellular WAN egress IP.
+    // If a student is sitting at home with a fake/renamed Wi-Fi hotspot, their egress IP will be from their home ISP.
+    const studentIp = c.req.header('x-forwarded-for')?.split(',')[0].trim() ||
+                      c.req.header('cf-connecting-ip') ||
+                      c.req.header('x-real-ip') ||
+                      '127.0.0.1';
+
+    const isLocalDev = 
+      studentIp === '127.0.0.1' || 
+      studentIp === '::1' || 
+      studentIp.startsWith('192.168.') || 
+      studentIp.startsWith('10.');
+
+    if (session.facultyIp && !isLocalDev) {
+      const facultySubnet = session.facultyIp.split('.').slice(0, 3).join('.');
+      const studentSubnet = studentIp.split('.').slice(0, 3).join('.');
+      if (studentIp !== session.facultyIp && facultySubnet !== studentSubnet) {
+        console.warn(
+          `[ProximityGuard] ❌ ROGUE HOTSPOT DETECTED! Student IP (${studentIp}) does not match Faculty Hotspot egress IP (${session.facultyIp}). Potential SSID spoofing attempt.`,
+        );
+
+        return c.json(
+          {
+            success: false,
+            error: `Network anti-spoofing alert: Connected to untrusted network. SSID matches but internet egress IP does not originate from faculty hotspot.`,
+            details: {
+              reason: 'Egress IP mismatch. Rogue AP spoofing detected.',
+            },
+            timestamp: new Date().toISOString(),
+          },
+          403,
+        );
+      }
+    }
+  }
+
   // ─── All Proximity Checks Passed ─────────────────────────────
   const durationMs = performance.now() - startTime;
   const distance = estimateDistance(signalStrength);

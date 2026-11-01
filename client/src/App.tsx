@@ -1,62 +1,151 @@
 /**
- * App — Root component with tabbed navigation.
- * Routes between Register, Proximity, and Dashboard views.
+ * ═══════════════════════════════════════════════════════════════
+ *  App — Root Application Component
+ *
+ *  Role Segregation Architecture:
+ *  1. Access Gate: Users enter Campus ID at the Sign-In Portal.
+ *  2. Role Check: If the ID string contains "faculty" (or starts with fac/prof),
+ *     segregated to FACULTY WORKSPACE. Otherwise, segregated to STUDENT TERMINAL.
+ *  3. Strict Role Isolation: Faculty sees only session management,
+ *     hotspot broadcast, radar, live roster, and Excel export.
+ *     Students see only attendance rate, date-wise history, and 1-tap punch.
+ *  4. Instant Sign Out: Quick switch to return to the sign-in portal.
+ * ═══════════════════════════════════════════════════════════════
  */
 
 import { useState } from 'react';
+import { SignInPortal } from './components/SignInPortal';
+import { FacultyView } from './components/FacultyView';
+import { StudentAttendView } from './components/StudentAttendView';
 import { RegisterView } from './components/RegisterView';
-import { ProximityComponent } from './components/ProximityComponent';
-import { DashboardView } from './components/DashboardView';
+import type { CampusAuthUser } from './types';
 
-type Tab = 'register' | 'proximity' | 'dashboard';
+function getStoredAuthUser(): CampusAuthUser | null {
+  try {
+    const saved = localStorage.getItem('campus_auth_session');
+    if (saved) return JSON.parse(saved);
+  } catch {
+    // Ignore
+  }
+  return null;
+}
 
-function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+export function App() {
+  const [user, setUser] = useState<CampusAuthUser | null>(getStoredAuthUser());
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const tabs: { id: Tab; label: string; emoji: string }[] = [
-    { id: 'register', label: 'Register', emoji: '🔑' },
-    { id: 'proximity', label: 'Attend', emoji: '📡' },
-    { id: 'dashboard', label: 'Dashboard', emoji: '📊' },
-  ];
+  // Extract session & hotspot query parameters from QR code scan
+  const [urlSession] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('session');
+  });
+  const [urlHotspot] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('hotspot');
+  });
+  const [urlToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('token');
+  });
+
+  const handleSignIn = (authenticatedUser: CampusAuthUser) => {
+    setUser(authenticatedUser);
+    setIsRegistering(false);
+    try {
+      localStorage.setItem('campus_auth_session', JSON.stringify(authenticatedUser));
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleSignOut = () => {
+    setUser(null);
+    setIsRegistering(false);
+    try {
+      localStorage.removeItem('campus_auth_session');
+    } catch {
+      // Ignore
+    }
+  };
 
   return (
     <div className="app-container">
-      {/* Header */}
-      <header className="app-header">
-        <h1 className="app-title">Trusted Proximity Attendance</h1>
-        <p className="app-subtitle">
-          BLE Proximity + FIDO2 Biometric Verification
-        </p>
+      {/* ── Top Header ── */}
+      <header className="app-header" style={{ marginBottom: user ? 'var(--space-6)' : 'var(--space-4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+          <div>
+            <h1 className="app-title">Campus Attendance</h1>
+          </div>
+
+          {/* User Status Bar when Authenticated */}
+          {user && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                {user.name} <span style={{ color: 'var(--text-muted)' }}>({user.id})</span>
+              </span>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={handleSignOut}
+                style={{
+                  fontSize: 'var(--font-size-xs)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '4px 10px',
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="nav-tabs" id="main-navigation">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            id={`nav-${tab.id}`}
-          >
-            {tab.emoji} {tab.label}
-          </button>
-        ))}
-      </nav>
-
-      {/* Views */}
+      {/* ── Main Segregated Views ── */}
       <main>
-        <div style={{ display: activeTab === 'register' ? 'block' : 'none' }}>
-          <RegisterView onSuccess={() => setActiveTab('proximity')} />
-        </div>
-        <div style={{ display: activeTab === 'proximity' ? 'block' : 'none' }}>
-          <ProximityComponent />
-        </div>
-        <div style={{ display: activeTab === 'dashboard' ? 'block' : 'none' }}>
-          <DashboardView />
-        </div>
+        {/* Unauthenticated State: Sign In Portal or Passkey Registration */}
+        {!user && (
+          <div>
+            {isRegistering ? (
+              <RegisterView
+                onSuccess={() => setIsRegistering(false)}
+                onBackToSignIn={() => setIsRegistering(false)}
+              />
+            ) : (
+              <SignInPortal
+                onSignIn={handleSignIn}
+                onOpenRegister={() => setIsRegistering(true)}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Authenticated State — Strictly segregated */}
+        {user && user.role === 'faculty' && (
+          <FacultyView currentUser={user} />
+        )}
+
+        {user && user.role === 'student' && (
+          <div>
+            {isRegistering ? (
+              <RegisterView
+                onSuccess={() => setIsRegistering(false)}
+                onBackToSignIn={() => setIsRegistering(false)}
+              />
+            ) : (
+              <StudentAttendView
+                currentUser={user}
+                initialSessionId={urlSession}
+                initialHotspotSSID={urlHotspot}
+                initialToken={urlToken}
+                onOpenRegister={() => setIsRegistering(true)}
+              />
+            )}
+          </div>
+        )}
       </main>
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <footer
         style={{
           textAlign: 'center',
@@ -66,12 +155,7 @@ function App() {
           fontSize: 'var(--font-size-xs)',
         }}
       >
-        <div>
-          🛡️ Trusted Proximity Attendance System v1.0
-        </div>
-        <div style={{ marginTop: 'var(--space-1)' }}>
-          Hono + React + WebAuthn + BLE + WebSocket • Built with real technologies
-        </div>
+        <div>Campus Attendance System</div>
       </footer>
     </div>
   );

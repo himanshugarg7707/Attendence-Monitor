@@ -35,7 +35,7 @@ app.use(
   cors({
     origin: [
   CONFIG.RP.origin,
-  'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
   'https://attendence-monitor.vercel.app'
 ],
@@ -50,6 +50,18 @@ app.use(
 app.route('/api/auth', authRoutes);
 app.route('/api/attendance', attendanceRoutes);
 app.route('/api/dashboard', createDashboardRoutes(upgradeWebSocket as any));
+
+// ─── Network Ping & Telemetry ────────────────────────────────────
+
+app.get('/api/ping', (c) => {
+  const clientIp = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || '127.0.0.1';
+  return c.json({
+    status: 'pong',
+    serverTime: Date.now(),
+    clientIp,
+    uptime: process.uptime(),
+  });
+});
 
 // ─── Health Check ────────────────────────────────────────────────
 

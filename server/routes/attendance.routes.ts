@@ -13,6 +13,7 @@ import {
   getActiveSessions,
   endSession,
   getAttendanceLog,
+  getStudentAttendanceSummary,
 } from '../store/memory-store.js';
 import { broadcastSessionStarted, broadcastSessionEnded } from '../services/broadcast.service.js';
 import type { ApiResponse, AttendanceRequest, AttendanceResult } from '../../shared/types.js';
@@ -67,8 +68,16 @@ attendanceRoutes.post('/verify', proximityGuard, async (c) => {
  * Professor starts a new attendance session for a classroom.
  */
 attendanceRoutes.post('/session/start', async (c) => {
-  const body = await c.req.json<{ professorId: string; className: string }>();
-  const { professorId, className } = body;
+  const body = await c.req.json<{
+    professorId: string;
+    className: string;
+    facultyName?: string;
+    department?: string;
+    hotspotSSID?: string;
+    hotspotGateway?: string;
+    requireHotspot?: boolean;
+  }>();
+  const { professorId, className, facultyName, department, hotspotSSID, hotspotGateway, requireHotspot } = body;
 
   if (!professorId || !className) {
     return c.json<ApiResponse<null>>(
@@ -81,11 +90,25 @@ attendanceRoutes.post('/session/start', async (c) => {
     );
   }
 
-  const session = createSession(professorId, className);
+  const facultyIp = c.req.header('x-forwarded-for')?.split(',')[0].trim() ||
+                    c.req.header('cf-connecting-ip') ||
+                    c.req.header('x-real-ip') ||
+                    '127.0.0.1';
+
+  const session = createSession({
+    professorId,
+    className,
+    facultyName,
+    department,
+    hotspotSSID,
+    hotspotGateway,
+    requireHotspot,
+    facultyIp,
+  });
   broadcastSessionStarted(session.id, session.id, session.className);
 
   console.log(
-    `[Session] Started: ${session.id} for "${className}" by professor ${professorId}`,
+    `[Session] Started: ${session.id} for "${className}" by faculty ${facultyName || professorId} (Hotspot: ${hotspotSSID || 'None'}, Req: ${Boolean(requireHotspot)})`,
   );
 
   return c.json<ApiResponse<typeof session>>({
@@ -165,6 +188,21 @@ attendanceRoutes.get('/log/:sessionId', async (c) => {
   return c.json<ApiResponse<typeof log>>({
     success: true,
     data: log,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * GET /api/attendance/student/:studentId
+ * Get a student's personal attendance percentage and date-wise class records.
+ */
+attendanceRoutes.get('/student/:studentId', async (c) => {
+  const studentId = c.req.param('studentId');
+  const summary = getStudentAttendanceSummary(studentId);
+
+  return c.json<ApiResponse<typeof summary>>({
+    success: true,
+    data: summary,
     timestamp: new Date().toISOString(),
   });
 });

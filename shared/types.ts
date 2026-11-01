@@ -23,18 +23,40 @@ export interface HLCTimestamp {
   nodeId: string;
 }
 
-// ─── Proximity Data ──────────────────────────────────────────────
+// ─── Proximity & Hotspot Data ─────────────────────────────────────
 
 /**
- * BLE proximity data sent from the student's device.
+ * Faculty Hotspot verification data sent from student device.
+ */
+export interface HotspotData {
+  /** Name of the Wi-Fi Hotspot the student is connected to */
+  ssid: string;
+  /** Whether the student device is confirmed connected to faculty's hotspot */
+  connected: boolean;
+  /** Gateway IP (e.g. 192.168.43.1 or 172.20.10.1) */
+  gatewayIp?: string;
+  /** Client IP assigned by the hotspot DHCP */
+  clientIp?: string;
+  /** BSSID or MAC address if available */
+  bssid?: string;
+}
+
+/**
+ * Proximity data sent from the student's device.
  */
 export interface ProximityData {
-  /** BLE signal strength in dBm (typically -30 to -100) */
+  /** BLE or Wi-Fi signal strength in dBm (typically -30 to -100) */
   signalStrength: number;
   /** Classroom beacon's rolling session token (rotates every 30s) */
   rollingSessionToken: string;
-  /** UUID of the BLE beacon being detected */
+  /** UUID of the BLE beacon or hotspot session */
   beaconUUID: string;
+  /** Hotspot verification details */
+  hotspot?: HotspotData;
+  /** Real network round-trip ping time in ms */
+  networkLatencyMs?: number;
+  /** Name of real physical Bluetooth device if scanned */
+  realBluetoothDevice?: string | null;
 }
 
 // ─── Attendance Request / Response ───────────────────────────────
@@ -87,6 +109,34 @@ export interface AttendanceResult {
 // ─── Student / Credential Types ──────────────────────────────────
 
 /**
+ * Historical record of a student's attendance in a class on a specific date.
+ */
+export interface StudentAttendanceHistoryRecord {
+  id: string;
+  sessionId: string;
+  className: string;
+  facultyName: string;
+  date: string; // YYYY-MM-DD
+  time: string; // e.g. 10:15 AM
+  timestamp: string;
+  status: 'PRESENT' | 'ABSENT' | 'LATE';
+  hotspotVerified?: boolean;
+  rssi?: number;
+}
+
+/**
+ * Summary of a student's attendance percentage and date-wise history.
+ */
+export interface StudentAttendanceSummary {
+  studentId: string;
+  studentName: string;
+  totalClasses: number;
+  attendedClasses: number;
+  percentage: number;
+  records: StudentAttendanceHistoryRecord[];
+}
+
+/**
  * Stored student profile.
  */
 export interface StudentProfile {
@@ -116,12 +166,20 @@ export interface StoredCredential {
 // ─── Classroom Session ───────────────────────────────────────────
 
 /**
- * Active classroom attendance session managed by a professor.
+ * Active classroom attendance session managed by a faculty member.
  */
 export interface ClassroomSession {
   id: string;
   professorId: string;
+  facultyName?: string;
+  department?: string;
   className: string;
+  /** Hotspot configuration for this session */
+  hotspotSSID?: string;
+  hotspotBSSID?: string;
+  hotspotGateway?: string;
+  requireHotspot?: boolean;
+  facultyIp?: string;
   /** Currently active rolling session token */
   currentToken: string;
   /** Tokens that have been used (for grace period acceptance) */
@@ -151,6 +209,9 @@ export interface StudentVerifiedPayload {
   avatarUrl?: string;
   verifiedAt: string;
   signalStrength: number;
+  hotspotConnected?: boolean;
+  hotspotSSID?: string;
+  networkLatencyMs?: number;
   verificationSteps: VerificationStep[];
 }
 
@@ -165,6 +226,15 @@ export interface WebAuthnRegistrationRequest {
 export interface WebAuthnChallengeResponse {
   challenge: string;
   options: Record<string, unknown>;
+}
+
+// ─── Authentication & User Segregation ──────────────────────────
+
+export interface CampusAuthUser {
+  id: string;
+  name: string;
+  role: 'faculty' | 'student';
+  department?: string;
 }
 
 // ─── API Response Wrapper ────────────────────────────────────────

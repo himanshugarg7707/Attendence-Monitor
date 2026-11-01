@@ -5,6 +5,8 @@
  * ═══════════════════════════════════════════════════════════════════
  */
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const CONFIG = {
   /** Server port */
   PORT: Number(process.env.PORT) || 4000,
@@ -12,8 +14,8 @@ export const CONFIG = {
   /** Relying Party configuration for WebAuthn */
   RP: {
     name: 'Trusted Proximity Attendance',
-    id: 'attendence-monitor.vercel.app',
-    origin: 'https://attendence-monitor.vercel.app',
+    id: process.env.RP_ID || (isDev ? 'localhost' : 'attendence-monitor.vercel.app'),
+    origin: process.env.RP_ORIGIN || (isDev ? 'http://localhost:5173' : 'https://attendence-monitor.vercel.app'),
   },
 
   /** BLE Proximity thresholds */

@@ -57,11 +57,53 @@ export async function verifyAttendance(payload: unknown) {
   });
 }
 
-export async function startSession(professorId: string, className: string) {
+export interface StartSessionPayload {
+  professorId: string;
+  className: string;
+  facultyName?: string;
+  department?: string;
+  hotspotSSID?: string;
+  hotspotGateway?: string;
+  requireHotspot?: boolean;
+}
+
+export async function startSession(
+  professorIdOrPayload: string | StartSessionPayload,
+  className?: string,
+) {
+  const body =
+    typeof professorIdOrPayload === 'object'
+      ? professorIdOrPayload
+      : { professorId: professorIdOrPayload, className: className ?? '' };
+
   return request('/api/attendance/session/start', {
     method: 'POST',
-    body: JSON.stringify({ professorId, className }),
+    body: JSON.stringify(body),
   });
+}
+
+export async function pingServer(): Promise<{
+  success: boolean;
+  latencyMs: number;
+  clientIp?: string;
+  serverTime?: number;
+}> {
+  const start = performance.now();
+  try {
+    const res = await request<{ status: string; clientIp: string; serverTime: number }>('/api/ping');
+    const latencyMs = Math.round(performance.now() - start);
+    return {
+      success: res.success,
+      latencyMs,
+      clientIp: res.data?.clientIp,
+      serverTime: res.data?.serverTime,
+    };
+  } catch {
+    return {
+      success: false,
+      latencyMs: -1,
+    };
+  }
 }
 
 export async function endSession(sessionId: string) {
@@ -77,4 +119,8 @@ export async function getActiveSessions() {
 
 export async function getAttendanceLog(sessionId: string) {
   return request(`/api/attendance/log/${sessionId}`);
+}
+
+export async function getStudentAttendance(studentId: string) {
+  return request<import('../types').StudentAttendanceSummary>(`/api/attendance/student/${studentId}`);
 }

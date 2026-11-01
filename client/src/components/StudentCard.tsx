@@ -52,9 +52,13 @@ export function StudentCard({ student, index }: StudentCardProps) {
     >
       <div className="student-card-header">
         <div className={`student-avatar ${colorClass}`}>{initials}</div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div className="student-name">{student.studentName}</div>
-          <div className="student-time">✓ {formatTime(student.verifiedAt)}</div>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)' }}>{student.studentId}</span>
+            <span>•</span>
+            <span className="student-time">✓ {formatTime(student.verifiedAt)}</span>
+          </div>
         </div>
       </div>
 
@@ -75,7 +79,17 @@ export function StudentCard({ student, index }: StudentCardProps) {
       {/* Verification Badges */}
       <div className="verification-badges">
         <span className="badge success">🔐 Biometric ✓</span>
+        {student.hotspotConnected && (
+          <span className="badge success" title={student.hotspotSSID || 'Faculty Hotspot'}>
+            📶 Hotspot ✓
+          </span>
+        )}
         <span className="badge success">📡 Proximity ✓</span>
+        {student.networkLatencyMs && (
+          <span className="badge info" style={{ fontFamily: 'var(--font-mono)' }}>
+            ⚡ {student.networkLatencyMs}ms
+          </span>
+        )}
         <span className="badge info">
           {passedSteps}/{totalSteps} checks
         </span>

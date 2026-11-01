@@ -12,12 +12,52 @@ export interface HLCTimestamp {
   nodeId: string;
 }
 
-// ─── Proximity ───────────────────────────────────────────────────
+// ─── Proximity & Hotspot ─────────────────────────────────────────
+
+export interface HotspotData {
+  ssid: string;
+  connected: boolean;
+  gatewayIp?: string;
+  clientIp?: string;
+  bssid?: string;
+}
 
 export interface ProximityData {
   signalStrength: number;
   rollingSessionToken: string;
   beaconUUID: string;
+  hotspot?: HotspotData;
+  networkLatencyMs?: number;
+  realBluetoothDevice?: string | null;
+}
+
+// ─── Session ─────────────────────────────────────────────────────
+
+export interface ClassroomSession {
+  id: string;
+  professorId: string;
+  facultyName?: string;
+  department?: string;
+  className: string;
+  hotspotSSID?: string;
+  hotspotBSSID?: string;
+  hotspotGateway?: string;
+  requireHotspot?: boolean;
+  facultyIp?: string;
+  currentToken: string;
+  previousTokens: string[];
+  startedAt: string;
+  verifiedStudents: string[];
+  isActive: boolean;
+}
+
+// ─── Authentication & User Segregation ──────────────────────────
+
+export interface CampusAuthUser {
+  id: string;
+  name: string;
+  role: 'faculty' | 'student';
+  department?: string;
 }
 
 // ─── Attendance ──────────────────────────────────────────────────
@@ -46,6 +86,30 @@ export interface AttendanceResult {
   error?: string;
 }
 
+// ─── Student Attendance History & Percentage ─────────────────────
+
+export interface StudentAttendanceHistoryRecord {
+  id: string;
+  sessionId: string;
+  className: string;
+  facultyName: string;
+  date: string; // YYYY-MM-DD
+  time: string; // e.g. 10:15 AM
+  timestamp: string;
+  status: 'PRESENT' | 'ABSENT' | 'LATE';
+  hotspotVerified?: boolean;
+  rssi?: number;
+}
+
+export interface StudentAttendanceSummary {
+  studentId: string;
+  studentName: string;
+  totalClasses: number;
+  attendedClasses: number;
+  percentage: number;
+  records: StudentAttendanceHistoryRecord[];
+}
+
 // ─── Student ─────────────────────────────────────────────────────
 
 export interface StudentVerifiedPayload {
@@ -54,6 +118,9 @@ export interface StudentVerifiedPayload {
   avatarUrl?: string;
   verifiedAt: string;
   signalStrength: number;
+  hotspotConnected?: boolean;
+  hotspotSSID?: string;
+  networkLatencyMs?: number;
   verificationSteps: VerificationStep[];
 }
 
