@@ -18,6 +18,7 @@ import { SignInPortal } from './components/SignInPortal';
 import { FacultyView } from './components/FacultyView';
 import { StudentAttendView } from './components/StudentAttendView';
 import { RegisterView } from './components/RegisterView';
+import { Fall } from './components/Fall';
 import type { CampusAuthUser } from './types';
 
 function getStoredAuthUser(): CampusAuthUser | null {
@@ -70,6 +71,9 @@ export function App() {
 
   return (
     <div className="app-container">
+      {/* ── Ambient Falling Autumn Leaves ── */}
+      <Fall count={24} wind={0.3} opacity={0.8} />
+
       {/* ── Top Header ── */}
       <header className="app-header" style={{ marginBottom: user ? 'var(--space-6)' : 'var(--space-4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
